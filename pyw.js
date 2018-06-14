@@ -1,6 +1,10 @@
 
-const St = imports.gi.St;
+const Clutter = imports.gi.Clutter;
+const Lang = imports.lang;
 const Main = imports.ui.main;
+const PanelMenu = imports.ui.panelMenu;
+const PopupMenu = imports.ui.popupMenu;
+const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 
 var text, button;
@@ -46,4 +50,62 @@ function createButton() {
     button.connect('button-press-event', _showHello);
     return button;
 }
-    
+
+const PywMenuButton = new Lang.Class({
+    Name: 'PywMenuButton',
+
+    Extends: PanelMenu.Button,
+
+    _init: function() {
+
+        // Label
+        this._weatherInfo = new St.Label({
+            y_align: Clutter.ActorAlign.CENTER,
+            text: _('PYW')
+        });
+
+        this._weatherIcon = new St.Icon({
+            icon_name: 'system-run-symbolic',
+            style_class: 'system-status-icon'
+        });
+
+        // Panel menu item - the current class
+        let menuAlignment = 1.0 - (80 / 100);
+        if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL){
+            menuAlignment = 1.0 - menuAlignment;
+        }
+
+        this.parent(menuAlignment);
+
+        // Putting the panel item together
+        let topBox = new St.BoxLayout();
+        topBox.add_actor(this._weatherIcon);
+        topBox.add_actor(this._weatherInfo);
+        this.actor.add_actor(topBox);
+
+
+        let children = Main.panel._leftBox.get_children();
+        Main.panel._leftBox.insert_child_at_index(this.actor, children.length);
+
+        if (Main.panel._menus === undefined)
+            Main.panel.menuManager.addMenu(this.menu);
+        else
+            Main.panel._menus.addMenu(this.menu);
+    },
+
+    _onStatusChanged: function(status) {
+    },
+
+    _onScroll: function(actor, event) {
+    },
+
+    _onClick: () => {
+        _showHello();
+    }
+});
+
+function createTrayButton(){
+    var button = new PywMenuButton();
+    button.connect('button-press-event', _showHello);
+    return button;
+}
