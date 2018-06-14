@@ -12,16 +12,13 @@ const Pyw = imports.pyw;
 let button;
 
 function init() {
-    // button = Pyw.createButton()
     button = Pyw.createTrayButton();
 }
 
 function enable() {
-    // Main.panel._rightBox.insert_child_at_index(button, 0);
     Main.panel.addToStatusArea('pywMenu', button);
 }
 
 function disable() {
-    // Main.panel._rightBox.remove_child(button);
     button.destroy();
 }

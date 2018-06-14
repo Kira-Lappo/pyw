@@ -4,6 +4,19 @@
     font-weight: bold;
     color: #ffffff;
     background-color: rgba(10,10,10,0.7);
-    border-radius: 5px;
+    border-radius: 100pt;
     padding: .5em;
+}
+
+.round-button {
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.062);
+    border-radius: 100pt;
+    border-color: black;
+    border-width: 1pt;
+    padding: .5em;
+}
+
+.round-button:hover {
+    background-color: rgba(0, 0, 0, 0.233);
 }

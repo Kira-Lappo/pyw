@@ -7,14 +7,9 @@ const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 
-var text, button;
-
 var Message = "Hi there!";
 
-function _hideHello() {
-    Main.uiGroup.remove_actor(text);
-    text = null;
-}
+var text, button;
 
 function _showHello() {
     if (!text) {
@@ -106,6 +101,21 @@ const PywMenuButton = new Lang.Class({
 
         let text = new St.Label({ style_class: 'helloworld-label', text: Message });
         this._itemCurrentWeatherInfo.actor.add_actor(text);
+
+        var button = new St.Button({
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            accessible_name: "accessibleName",
+            style_class: 'round-button'
+        });
+
+        button.child = new St.Icon({
+            icon_name: 'system-run-symbolic',
+            style_class: 'system-status-icon'
+        });
+
+        this._itemFutureWeatherInfo.actor.add_actor(button);
 
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
         this.menu.addMenuItem(this._separatorItem);
