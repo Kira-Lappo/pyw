@@ -59,12 +59,12 @@ const PywMenuButton = new Lang.Class({
     _init: function() {
 
         // Label
-        this._weatherInfo = new St.Label({
+        this._buttonLabel = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
             text: _('PYW')
         });
 
-        this._weatherIcon = new St.Icon({
+        this._buttonWeatherIcon = new St.Icon({
             icon_name: 'system-run-symbolic',
             style_class: 'system-status-icon'
         });
@@ -78,29 +78,58 @@ const PywMenuButton = new Lang.Class({
         this.parent(menuAlignment);
 
         // Putting the panel item together
-        let topBox = new St.BoxLayout();
-        topBox.add_actor(this._weatherIcon);
-        topBox.add_actor(this._weatherInfo);
-        this.actor.add_actor(topBox);
+        let buttonBox = new St.BoxLayout();
+        buttonBox.add_actor(this._buttonWeatherIcon);
+        buttonBox.add_actor(this._buttonLabel);
+        this.actor.add_actor(buttonBox);
 
+        let targetBox = Main.panel._leftBox
+        let targetBoxChildren = targetBox.get_children();
+        targetBox.insert_child_at_index(this.actor, targetBoxChildren.length);
 
-        let children = Main.panel._leftBox.get_children();
-        Main.panel._leftBox.insert_child_at_index(this.actor, children.length);
-
-        if (Main.panel._menus === undefined)
+        if (Main.panel._menus === undefined){
             Main.panel.menuManager.addMenu(this.menu);
-        else
+        }
+        else {
             Main.panel._menus.addMenu(this.menu);
+        }
+
+        this._itemCurrentWeatherInfo = new PopupMenu.PopupBaseMenuItem({
+            reactive: false
+        });
+
+        this._itemFutureWeatherInfo = new PopupMenu.PopupBaseMenuItem({
+            reactive: false
+        });
+
+        this._separatorItem = new PopupMenu.PopupSeparatorMenuItem();
+
+        let text = new St.Label({ style_class: 'helloworld-label', text: Message });
+        this._itemCurrentWeatherInfo.actor.add_actor(text);
+
+        this.menu.addMenuItem(this._itemCurrentWeatherInfo);
+        this.menu.addMenuItem(this._separatorItem);
+        this.menu.addMenuItem(this._itemFutureWeatherInfo);
     },
 
     _onStatusChanged: function(status) {
+        this._idle = (status == GnomeSession.PresenceStatus.IDLE);
+    },
+
+    _onButtonHoverChanged: function(actor, event) {
+        if (actor.hover) {
+            actor.add_style_pseudo_class('hover');
+            actor.set_style(this._button_background_style);
+        } else {
+            actor.remove_style_pseudo_class('hover');
+            actor.set_style('background-color:;');
+            // if (actor != this._urlButton){
+            //     actor.set_style(this._button_border_style);
+            // }
+        }
     },
 
     _onScroll: function(actor, event) {
-    },
-
-    _onClick: () => {
-        _showHello();
     }
 });
 
