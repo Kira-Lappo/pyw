@@ -7,20 +7,14 @@ const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 
+// Import icon names
+const IconNames = imports.iconNames;
+const ActionIcons       = IconNames.ActionIcons;
+const CategoriesIcons   = IconNames.CategoriesIcons;
+const EmblemIcons       = IconNames.EmblemIcons;
+const WeatherIcons       = IconNames.StatusIcons.Weather;
+
 var Message = "Hi there!";
-
-const ActionIcons = {
-    SystemRun : "system-run-symbolic"
-};
-
-const CategoriesIcons = {
-    PreferencesSystem : "preferences-system-symbolic"
-};
-
-const EmblemIcons = {
-    System : "emblem-system-symbolic",
-    Synchronizing : "emblem-synchronizing-symbolic"
-};
 
 const uiFactory = {
     createIconButton : (accessibleName, iconName) => {
@@ -108,6 +102,9 @@ const PywMenuButton = new Lang.Class({
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
         button = uiFactory.createIconButton("Synchronizing", EmblemIcons.Synchronizing);
+        this._itemFutureWeatherInfo.actor.add_actor(button);
+
+        button = uiFactory.createIconButton("fog", WeatherIcons.Fog);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
