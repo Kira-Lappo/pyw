@@ -9,45 +9,40 @@ const Tweener = imports.ui.tweener;
 
 var Message = "Hi there!";
 
-var text, button;
+const ActionIcons = {
+    SystemRun : "system-run-symbolic"
+};
 
-function _showHello() {
-    if (!text) {
-        text = new St.Label({ style_class: 'helloworld-label', text: Message });
-        Main.uiGroup.add_actor(text);
+const CategoriesIcons = {
+    PreferencesSystem : "preferences-system-symbolic"
+};
+
+const EmblemIcons = {
+    System : "emblem-system-symbolic",
+    Synchronizing : "emblem-synchronizing-symbolic"
+};
+
+const uiFactory = {
+    createIconButton : (accessibleName, iconName) => {
+        var button = new St.Button({
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            accessible_name: accessibleName,
+            style_class: "round-button"
+        });
+
+        button.child = new St.Icon({
+            icon_name: iconName,
+            style_class: "system-status-icon"
+        });
+
+        return button
     }
-
-    text.opacity = 255;
-
-    let monitor = Main.layoutManager.primaryMonitor;
-
-    text.set_position(monitor.x + Math.floor(monitor.width / 2 - text.width / 2),
-                      monitor.y + Math.floor(monitor.height / 2 - text.height / 2));
-
-    Tweener.addTween(text,
-                     { opacity: 0,
-                       time: 2,
-                       transition: 'easeOutQuad',
-                       onComplete: _hideHello });
-}
-
-function createButton() {
-    button = new St.Bin({ style_class: 'panel-button',
-                          reactive: true,
-                          can_focus: true,
-                          x_fill: true,
-                          y_fill: false,
-                          track_hover: true });
-    let icon = new St.Icon({ icon_name: 'system-run-symbolic',
-                             style_class: 'system-status-icon' });
-
-    button.set_child(icon);
-    button.connect('button-press-event', _showHello);
-    return button;
-}
+};
 
 const PywMenuButton = new Lang.Class({
-    Name: 'PywMenuButton',
+    Name: "PywMenuButton",
 
     Extends: PanelMenu.Button,
 
@@ -56,12 +51,12 @@ const PywMenuButton = new Lang.Class({
         // Label
         this._buttonLabel = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
-            text: _('PYW')
+            text: _("PYW")
         });
 
         this._buttonWeatherIcon = new St.Icon({
-            icon_name: 'system-run-symbolic',
-            style_class: 'system-status-icon'
+            icon_name: "system-run-symbolic",
+            style_class: "system-status-icon"
         });
 
         // Panel menu item - the current class
@@ -99,22 +94,20 @@ const PywMenuButton = new Lang.Class({
 
         this._separatorItem = new PopupMenu.PopupSeparatorMenuItem();
 
-        let text = new St.Label({ style_class: 'helloworld-label', text: Message });
+        let text = new St.Label({ style_class: "helloworld-label", text: Message });
         this._itemCurrentWeatherInfo.actor.add_actor(text);
 
-        var button = new St.Button({
-            reactive: true,
-            can_focus: true,
-            track_hover: true,
-            accessible_name: "accessibleName",
-            style_class: 'round-button'
-        });
 
-        button.child = new St.Icon({
-            icon_name: 'system-run-symbolic',
-            style_class: 'system-status-icon'
-        });
+        let button = uiFactory.createIconButton("SystemRun", ActionIcons.SystemRun);
+        this._itemFutureWeatherInfo.actor.add_actor(button);
 
+        button = uiFactory.createIconButton("PreferencesSystem", CategoriesIcons.PreferencesSystem);
+        this._itemFutureWeatherInfo.actor.add_actor(button);
+
+        button = uiFactory.createIconButton("System", EmblemIcons.System);
+        this._itemFutureWeatherInfo.actor.add_actor(button);
+
+        button = uiFactory.createIconButton("Synchronizing", EmblemIcons.Synchronizing);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
@@ -128,11 +121,11 @@ const PywMenuButton = new Lang.Class({
 
     _onButtonHoverChanged: function(actor, event) {
         if (actor.hover) {
-            actor.add_style_pseudo_class('hover');
+            actor.add_style_pseudo_class("hover");
             actor.set_style(this._button_background_style);
         } else {
-            actor.remove_style_pseudo_class('hover');
-            actor.set_style('background-color:;');
+            actor.remove_style_pseudo_class("hover");
+            actor.set_style("background-color:;");
             // if (actor != this._urlButton){
             //     actor.set_style(this._button_border_style);
             // }
@@ -144,7 +137,5 @@ const PywMenuButton = new Lang.Class({
 });
 
 function createTrayButton(){
-    var button = new PywMenuButton();
-    button.connect('button-press-event', _showHello);
-    return button;
+    return new PywMenuButton();
 }
