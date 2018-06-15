@@ -1,11 +1,11 @@
 
-.helloworld-label {
-    font-size: 36px;
-    font-weight: bold;
+
+.current-weather-header {
+    font-size: 36pt;
     color: #ffffff;
-    background-color: rgba(10,10,10,0.7);
-    border-radius: 100pt;
     padding: .5em;
+
+    background-color: rgba(0, 95, 90, 0.7);
 }
 
 .round-button {

@@ -14,9 +14,21 @@ const CategoriesIcons   = IconNames.CategoriesIcons;
 const EmblemIcons       = IconNames.EmblemIcons;
 const WeatherIcons       = IconNames.StatusIcons.Weather;
 
-var Message = "Hi there!";
+const TemperatureScale = {
+    CELSIUS     : "°C",
+    KELVIN      : "K",
+    FARENHEIT   : "°F",
+}
 
-const uiFactory = {
+const WeatherState = {
+    temperatureScale            : TemperatureScale.CELSIUS,
+    temperature                 : 21,
+    weatherStateIcon            : null,
+    weatherStateHeader          : "Clear",
+    location                    : "Minsk, Belarus"
+}
+
+const UiFactory = {
     createIconButton : (accessibleName, iconName) => {
         var button = new St.Button({
             reactive: true,
@@ -26,12 +38,64 @@ const uiFactory = {
             style_class: "round-button"
         });
 
-        button.child = new St.Icon({
+        button.child = UiFactory.createIcon(iconName);
+        return button
+    },
+
+    createIcon : (iconName) => {
+        var icon =  new St.Icon({
             icon_name: iconName,
             style_class: "system-status-icon"
         });
 
-        return button
+        return icon;
+    },
+
+    createCurrentWeatherPopupMenuItem : (weatherState) => {
+        let menuItem = new PopupMenu.PopupBaseMenuItem({
+            reactive: false
+        });
+
+        let weatherStateHeader = UiFactory.formatWeatherStateHeader(weatherState);
+        let text = new St.Label({
+            style_class: "current-weather-header",
+            text: weatherStateHeader
+        });
+
+        let icon = UiFactory.createIcon(WeatherIcons.Clear);
+
+        menuItem.actor.add_actor(icon);
+        menuItem.actor.add_actor(text);
+        return menuItem;
+    },
+
+    formatWeatherStateHeader : (weatherState) => {
+        var header = ""
+            + weatherState.weatherStateHeader
+            + ", "
+            + UiFactory.convertTemperature(weatherState.temperature, weatherState.temperatureScale)
+            + " "
+            + weatherState.temperatureScale;
+
+            return header;
+    },
+
+    convertTemperature : (originalValue, scale) => {
+        var value = 0;
+        switch (scale){
+            case TemperatureScale.FARENHEIT :
+                value = originalValue * 1.8 + 32;
+                break;
+            case TemperatureScale.KELVIN :
+                value =  originalValue + 273.15;
+                break;
+            case TemperatureScale.CELSIUS :
+            default:
+                value = originalValue;
+                break;
+        };
+
+        return value.toFixed(0);
     }
 };
 
@@ -78,9 +142,7 @@ const PywMenuButton = new Lang.Class({
             Main.panel._menus.addMenu(this.menu);
         }
 
-        this._itemCurrentWeatherInfo = new PopupMenu.PopupBaseMenuItem({
-            reactive: false
-        });
+        this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem(WeatherState);
 
         this._itemFutureWeatherInfo = new PopupMenu.PopupBaseMenuItem({
             reactive: false
@@ -88,23 +150,22 @@ const PywMenuButton = new Lang.Class({
 
         this._separatorItem = new PopupMenu.PopupSeparatorMenuItem();
 
-        let text = new St.Label({ style_class: "helloworld-label", text: Message });
-        this._itemCurrentWeatherInfo.actor.add_actor(text);
 
 
-        let button = uiFactory.createIconButton("SystemRun", ActionIcons.SystemRun);
+
+        let button = UiFactory.createIconButton("SystemRun", ActionIcons.SystemRun);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
-        button = uiFactory.createIconButton("PreferencesSystem", CategoriesIcons.PreferencesSystem);
+        button = UiFactory.createIconButton("PreferencesSystem", CategoriesIcons.PreferencesSystem);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
-        button = uiFactory.createIconButton("System", EmblemIcons.System);
+        button = UiFactory.createIconButton("System", EmblemIcons.System);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
-        button = uiFactory.createIconButton("Synchronizing", EmblemIcons.Synchronizing);
+        button = UiFactory.createIconButton("Synchronizing", EmblemIcons.Synchronizing);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
-        button = uiFactory.createIconButton("fog", WeatherIcons.Fog);
+        button = UiFactory.createIconButton("fog", WeatherIcons.Fog);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
