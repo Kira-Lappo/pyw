@@ -7,17 +7,3 @@
 
     background-color: rgba(0, 95, 90, 0.7);
 }
-
-.round-button {
-    border-radius: 32pt;
-    padding: 4pt;
-}
-
-.round-button > StIcon {
-    icon-size: 16pt;
-}
-
-.round-button:hover {
-    border: none;
-    padding: 14pt;
-}
