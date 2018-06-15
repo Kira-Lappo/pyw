@@ -30,15 +30,7 @@ const WeatherState = {
 
 const UiFactory = {
     createIconButton : (accessibleName, iconName) => {
-        var button = new St.Button({
-            reactive: true,
-            can_focus: true,
-            track_hover: true,
-            accessible_name: accessibleName,
-            style_class: "round-button"
-        });
-
-        button.child = UiFactory.createIcon(iconName);
+        button = Main.panel.statusArea.aggregateMenu._system._createActionButton(iconName, accessibleName);
         return button
     },
 
@@ -157,15 +149,6 @@ const PywMenuButton = new Lang.Class({
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
         button = UiFactory.createIconButton("PreferencesSystem", CategoriesIcons.PreferencesSystem);
-        this._itemFutureWeatherInfo.actor.add_actor(button);
-
-        button = UiFactory.createIconButton("System", EmblemIcons.System);
-        this._itemFutureWeatherInfo.actor.add_actor(button);
-
-        button = UiFactory.createIconButton("Synchronizing", EmblemIcons.Synchronizing);
-        this._itemFutureWeatherInfo.actor.add_actor(button);
-
-        button = UiFactory.createIconButton("fog", WeatherIcons.Fog);
         this._itemFutureWeatherInfo.actor.add_actor(button);
 
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);

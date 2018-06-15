@@ -1,7 +1,7 @@
 
 
 .current-weather-header {
-    font-size: 36pt;
+    font-size: 26pt;
     color: #ffffff;
     padding: .5em;
 
@@ -9,14 +9,15 @@
 }
 
 .round-button {
-    color: #ffffff;
-    background-color: rgba(0, 0, 0, 0.062);
-    border-radius: 100pt;
-    border-color: black;
-    border-width: 1pt;
-    padding: .5em;
+    border-radius: 32pt;
+    padding: 4pt;
+}
+
+.round-button > StIcon {
+    icon-size: 16pt;
 }
 
 .round-button:hover {
-    background-color: rgba(0, 0, 0, 0.233);
+    border: none;
+    padding: 14pt;
 }
