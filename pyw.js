@@ -12,7 +12,8 @@ const IconNames = imports.iconNames;
 const ActionIcons       = IconNames.ActionIcons;
 const CategoriesIcons   = IconNames.CategoriesIcons;
 const EmblemIcons       = IconNames.EmblemIcons;
-const WeatherIcons       = IconNames.StatusIcons.Weather;
+const WeatherIcons      = IconNames.StatusIcons.Weather;
+const RadioIcons        = IconNames.StatusIcons.Radio;
 
 let PoweredByText = _("Powered by Yandex.Weather");
 
@@ -147,23 +148,22 @@ const PywMenuButton = new Lang.Class({
 
         this.parent(menuAlignment);
 
-
-
-
-
         this.initTrayButton();
         this.initPopup();
+
+        this.refreshTrayButton(WeatherState);
+        this.refreshPopup(WeatherState);
     },
 
     initTrayButton : function(){
         // Label
         let _buttonLabel = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
-            text: WeatherState.weatherStateHeader
+            text: "~"
         });
 
         let _buttonWeatherIcon = new St.Icon({
-            icon_name: WeatherState.weatherStateIcon,
+            icon_name: RadioIcons.Unchecked,
             style_class: "system-status-icon"
         });
 
@@ -191,6 +191,15 @@ const PywMenuButton = new Lang.Class({
 
         this._poweredByInfo = UiFactory.createPoweredByMenuItem(this);
         this.menu.addMenuItem(this._poweredByInfo);
+    },
+
+    refreshTrayButton : function(weatherState) {
+        this.trayButton.icon.icon_name = weatherState.weatherStateIcon;
+        this.trayButton.label.text = weatherState.weatherStateHeader;
+    },
+
+    refreshPopup : function(weatherState) {
+
     },
 
     _onStatusChanged: function(status) {

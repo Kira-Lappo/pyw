@@ -13,6 +13,9 @@ const EmblemIcons = {
 };
 
 const StatusIcons = {
+    Radio : {
+        Unchecked : "radio-symbolic"
+    },
     Weather : {
         ClearNight              : "weather-clear-night-symbolic",
         Clear                   : "weather-clear-symbolic",
