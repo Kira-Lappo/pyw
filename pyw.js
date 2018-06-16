@@ -25,9 +25,12 @@ const YandexWeatherProvider = YandexWeatherProviderLib.YandexWeatherProvider;
 const PoweredByText         = _("Powered by ");
 const NoDataText            = _("no-data");
 
+const WeatherSettings = {
+    temperatureScale            : TemperatureScale.CELSIUS
+}
+
 
 const WeatherState = {
-    temperatureScale            : TemperatureScale.CELSIUS,
     temperature                 : 0,
     weatherStateIcon            : RadioIcons.Unchecked,
     weatherStateHeader          : NoDataText,
@@ -43,7 +46,6 @@ const WeatherStateUpdater = {
 
         var newState = WeatherStateUpdater.provider.getWeatherState();
 
-        weatherState.temperatureScale   = newState.temperatureScale;
         weatherState.temperature        = newState.temperature;
         weatherState.weatherStateIcon   = newState.weatherStateIcon;
         weatherState.weatherStateHeader = newState.weatherStateHeader;
@@ -76,7 +78,7 @@ const UiUtils = {
         return actor;
     },
 
-    formatWeatherStateHeader : (weatherState) => {
+    formatWeatherStateHeader : (weatherState, weatherSettings) => {
         if (weatherState == undefined){
             return "formatWeatherStateHeader : weatherState is undefined";
         }
@@ -84,9 +86,9 @@ const UiUtils = {
         var header = ""
             + weatherState.weatherStateHeader
             + ", "
-            + UiUtils.convertTemperature(weatherState.temperature, weatherState.temperatureScale)
+            + UiUtils.convertTemperature(weatherState.temperature, weatherSettings.temperatureScale)
             + " "
-            + weatherState.temperatureScale;
+            + weatherSettings.temperatureScale;
 
             return header;
     },
@@ -205,7 +207,7 @@ const PywMenuButton = new Lang.Class({
         WeatherStateUpdater.update(WeatherState)
 
         this.refreshTrayButton(WeatherState);
-        this.refreshPopup(WeatherState);
+        this.refreshPopup(WeatherState, WeatherSettings);
     },
 
     initTrayButton : function(){
@@ -251,7 +253,7 @@ const PywMenuButton = new Lang.Class({
         this.trayButton.weatherLabel.text = weatherState.weatherStateHeader || "no data";
     },
 
-    refreshPopup : function(weatherState) {
+    refreshPopup : function(weatherState, weatherSettings) {
         // Update Current Weather
         // Update Current Weather Icon
         UiUtils.findChildActorByNamePath(this._itemCurrentWeatherInfo.actor,
@@ -264,7 +266,7 @@ const PywMenuButton = new Lang.Class({
                 "currentWeatherLayout",
                 "informationLayout",
                 "weatherHeaderLabel")
-            .text = UiUtils.formatWeatherStateHeader(weatherState);
+            .text = UiUtils.formatWeatherStateHeader(weatherState, weatherSettings);
 
         // Update Location
         UiUtils.findChildActorByNamePath(this._itemCurrentWeatherInfo.actor,

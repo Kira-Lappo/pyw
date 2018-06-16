@@ -1,5 +1,6 @@
-const TemperatureScaleLib = imports.temperatureScale;
-const TemperatureScale = TemperatureScaleLib.TemperatureScale;
+
+const Soup = imports.gi.Soup;
+
 
 // Import icon names
 const IconNames = imports.iconNames;
@@ -9,44 +10,76 @@ const EmblemIcons       = IconNames.EmblemIcons;
 const WeatherIcons      = IconNames.StatusIcons.Weather;
 const RadioIcons        = IconNames.StatusIcons.Radio;
 
+const YandexWeatherApiPATValue = "feaaa0e3-cb0a-4d17-9228-20bd91cf19b0"; // Testing mode key
+const YandexWeatherApiPATHeader = "X-Yandex-API-Key";
+
 const YandexWeatherProvider = {
     getWeatherState : () => {
-        return {
-            temperatureScale            : TemperatureScale.CELSIUS,
-            temperature                 : 15,
-            weatherStateIcon            : WeatherIcons.Snow,
-            weatherStateHeader          : "Literally Snow",
-            location                    : "Minsk, Belarus",
-            providerName                : "Yandex.Weather"
-        }
-    }
+        let weatherState = {
+            temperature                 : 0,
+            weatherStateIcon            : RadioIcons.Unchecked,
+            weatherStateHeader          : "NoDataText",
+            location                    : "NoDataText",
+            providerName                : "NoDataText"
+        };
+
+        let requestUri = "https://api.weather.yandex.ru/v1/forecast"
+            + "?lat=53.9"
+            + "&lon=27.56667"
+            + "&lang=en_US"
+            + "&limit=1"
+            + "&hours=false"
+            + "&extra=false";
+
+        // const HttpSession = new Soup.SessionAsync();
+        // Soup.Session.prototype.add_feature.call(_httpSession, new Soup.ProxyResolverDefault());
+
+        // create an http message
+        // var request = Soup.Message.new('GET', requestUri);
+
+        // HttpSession.queue_message(request, function(_httpSession, message) {
+        //     if (message.status_code !== 200) {
+        //         return;
+        //     }
+
+        //     var responseBody = request.response_body.data;
+        //     var responseJson = JSON.parse(responseBody);
+
+        //     var fact = responseJson.fact;
+
+        //     weatherState.temperature                = fact.temp;
+        //     weatherState.weatherStateIcon           = WeatherIcons.Snow;
+        //     weatherState.weatherStateHeader         = YandexProviderConverter.getWeatherIcon(fact.condition);
+        //     weatherState.location                   = fact.tzinfo.name;
+        //     weatherState.providerName               = "Yandex.Weather";
+        //   });
+
+        return weatherState;
+    },
 };
 
-/*
-    load_json_async: function(url, params, fun) {
-        if (_httpSession === undefined) {
-            _httpSession = new Soup.Session();
-            _httpSession.user_agent = this.user_agent;
-        } else {
-            // abort previous requests.
-            _httpSession.abort();
+const YandexProviderConverter = {
+    getWeatherIcon : function(condition) {
+        switch(condition.toLowerCase()) {
+            case "clear"                             : return WeatherIcons.Clear;
+            case "partly-cloudy"                     : return WeatherIcons.FewClouds;
+            case "cloudy"                            : return WeatherIcons.FewClouds;
+            case "overcast"                          : return WeatherIcons.Overcast;
+            case "partly-cloudy-and-light-rain"      : return WeatherIcons.ShowersScattered;
+            case "partly-cloudy-and-rain"            : return WeatherIcons.ShowersScattered;
+            case "overcast-and-rain"                 : return WeatherIcons.Showers;
+            case "overcast-thunderstorms-with-rain"  : return WeatherIcons.Storm;
+            case "cloudy-and-light-rain"             : return WeatherIcons.ShowersScattered;
+            case "overcast-and-light-rain"           : return WeatherIcons.ShowersScattered;
+            case "cloudy-and-rain"                   : return WeatherIcons.Showers;
+            case "overcast-and-wet-snow"             : return WeatherIcons.Snow;
+            case "partly-cloudy-and-light-snow"      : return WeatherIcons.Snow;
+            case "partly-cloudy-and-snow"            : return WeatherIcons.Snow;
+            case "overcast-and-snow "                : return WeatherIcons.Snow;
+            case "cloudy-and-light-snow"             : return WeatherIcons.Snow;
+            case "overcast-and-light-snow"           : return WeatherIcons.Snow;
+            case "cloudy-and-snow"                   : return WeatherIcons.Snow;
+            default                                  : return RadioIcons.Unchecked;
         }
-
-        let message = Soup.form_request_new_from_hash('GET', url, params);
-
-        _httpSession.queue_message(message, Lang.bind(this, function(_httpSession, message) {
-            try {
-                if (!message.response_body.data) {
-                    fun.call(this, 0);
-                    return;
-                }
-                let jp = JSON.parse(message.response_body.data);
-                fun.call(this, jp);
-            } catch (e) {
-                fun.call(this, 0);
-                return;
-            }
-        }));
-        return;
-    },
-*/
+    }
+}
