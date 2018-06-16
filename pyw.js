@@ -15,25 +15,32 @@ const EmblemIcons       = IconNames.EmblemIcons;
 const WeatherIcons      = IconNames.StatusIcons.Weather;
 const RadioIcons        = IconNames.StatusIcons.Radio;
 
-const PoweredByText         = _("Powered by Yandex.Weather");
+// Import scales
+const TemperatureScaleLib = imports.temperatureScale;
+const TemperatureScale = TemperatureScaleLib.TemperatureScale;
+
+const YandexWeatherProviderLib = imports.yandexWeatherProvider;
+const YandexWeatherProvider = YandexWeatherProviderLib.YandexWeatherProvider;
+
+const PoweredByText         = _("Powered by ");
 const NoDataText            = _("no-data");
 
-const TemperatureScale = {
-    CELSIUS     : "°C",
-    KELVIN      : "K",
-    FARENHEIT   : "°F",
-}
 
 const WeatherState = {
     temperatureScale            : TemperatureScale.CELSIUS,
     temperature                 : 0,
     weatherStateIcon            : RadioIcons.Unchecked,
     weatherStateHeader          : NoDataText,
-    location                    : NoDataText
+    location                    : NoDataText,
+    providerName                : NoDataText
 }
 
 const WeatherStateUpdater = {
+
+    _innerProvider : YandexWeatherProvider, // default provider
+
     update : (weatherState) => {
+
         var newState = WeatherStateUpdater.provider.getWeatherState();
 
         weatherState.temperatureScale   = newState.temperatureScale;
@@ -41,18 +48,15 @@ const WeatherStateUpdater = {
         weatherState.weatherStateIcon   = newState.weatherStateIcon;
         weatherState.weatherStateHeader = newState.weatherStateHeader;
         weatherState.location           = newState.location;
+        weatherState.providerName       = newState.providerName;
     },
 
-    provider : {
-        getWeatherState : () => {
-            return {
-                temperatureScale            : TemperatureScale.CELSIUS,
-                temperature                 : 15,
-                weatherStateIcon            : WeatherIcons.Snow,
-                weatherStateHeader          : "Literally Snow",
-                location                    : "Minsk, Belarus"
-            }
-        }
+    get provider() {
+        return this._innerProvider;
+    },
+
+    set provider(value) {
+        this._innerProvider = value;
     }
 }
 
@@ -171,17 +175,11 @@ const UiFactory = {
         });
 
         let poweredByLabel = new St.Label({
-            text: PoweredByText
+            text : NoDataText,
+            name : "poweredByLabel"
         });
 
-        let informationLayout = new St.BoxLayout({
-            vertical:true
-        });
-
-
-        informationLayout.add_actor(poweredByLabel);
-
-        poweredByInfo.actor.add_actor(informationLayout);
+        poweredByInfo.actor.add_actor(poweredByLabel);
         return poweredByInfo;
     }
 };
@@ -274,6 +272,10 @@ const PywMenuButton = new Lang.Class({
             "informationLayout",
             "locationLabel")
         .text = weatherState.location;
+
+        UiUtils.findChildActorByNamePath(this._poweredByInfo.actor,
+            "poweredByLabel")
+        .text = PoweredByText + weatherState.providerName;
     },
 
     _onStatusChanged: function(status) {
