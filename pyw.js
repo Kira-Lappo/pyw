@@ -26,11 +26,36 @@ const TemperatureScale = {
 
 const WeatherState = {
     temperatureScale            : TemperatureScale.CELSIUS,
-    temperature                 : 17,
-    weatherStateIcon            : WeatherIcons.Shower,
-    weatherStateHeader          : "Shower",
-    location                    : "Minsk, Belarus"
+    temperature                 : 0,
+    weatherStateIcon            : RadioIcons.Unchecked,
+    weatherStateHeader          : NoDataText,
+    location                    : NoDataText
 }
+
+const WeatherStateUpdater = {
+    update : (weatherState) => {
+        var newState = WeatherStateUpdater.provider.getWeatherState();
+
+        weatherState.temperatureScale   = newState.temperatureScale;
+        weatherState.temperature        = newState.temperature;
+        weatherState.weatherStateIcon   = newState.weatherStateIcon;
+        weatherState.weatherStateHeader = newState.weatherStateHeader;
+        weatherState.location           = newState.location;
+    },
+
+    provider : {
+        getWeatherState : () => {
+            return {
+                temperatureScale            : TemperatureScale.CELSIUS,
+                temperature                 : 15,
+                weatherStateIcon            : WeatherIcons.Snow,
+                weatherStateHeader          : "Literally Snow",
+                location                    : "Minsk, Belarus"
+            }
+        }
+    }
+}
+
 const UiUtils = {
     findChildActorByNamePath : (actor) => {
         if (arguments.length <= 1){
@@ -179,7 +204,7 @@ const PywMenuButton = new Lang.Class({
         this.initTrayButton();
         this.initPopup();
 
-        this.updateWeatherState(WeatherState);
+        WeatherStateUpdater.update(WeatherState)
 
         this.refreshTrayButton(WeatherState);
         this.refreshPopup(WeatherState);
@@ -249,10 +274,6 @@ const PywMenuButton = new Lang.Class({
             "informationLayout",
             "locationLabel")
         .text = weatherState.location;
-    },
-
-    updateWeatherState : (weatherState) => {
-
     },
 
     _onStatusChanged: function(status) {
