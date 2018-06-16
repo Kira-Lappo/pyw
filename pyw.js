@@ -14,6 +14,8 @@ const CategoriesIcons   = IconNames.CategoriesIcons;
 const EmblemIcons       = IconNames.EmblemIcons;
 const WeatherIcons       = IconNames.StatusIcons.Weather;
 
+let PoweredByText = _("Powered by Yandex.Weather");
+
 const TemperatureScale = {
     CELSIUS     : "°C",
     KELVIN      : "K",
@@ -22,9 +24,9 @@ const TemperatureScale = {
 
 const WeatherState = {
     temperatureScale            : TemperatureScale.CELSIUS,
-    temperature                 : 21,
-    weatherStateIcon            : null,
-    weatherStateHeader          : "Clear",
+    temperature                 : 17,
+    weatherStateIcon            : WeatherIcons.Shower,
+    weatherStateHeader          : "Shower",
     location                    : "Minsk, Belarus"
 }
 
@@ -37,28 +39,67 @@ const UiFactory = {
     createIcon : (iconName) => {
         var icon =  new St.Icon({
             icon_name: iconName,
-            style_class: "system-status-icon"
+            style_class: "system-status-icon weather-icon"
         });
 
         return icon;
     },
 
     createCurrentWeatherPopupMenuItem : (weatherState) => {
-        let menuItem = new PopupMenu.PopupBaseMenuItem({
-            reactive: false
-        });
-
         let weatherStateHeader = UiFactory.formatWeatherStateHeader(weatherState);
-        let text = new St.Label({
+        let weatherHeaderLabel = new St.Label({
             style_class: "current-weather-header",
             text: weatherStateHeader
         });
 
-        let icon = UiFactory.createIcon(WeatherIcons.Clear);
+        let locationLabel = new St.Label({
+            style_class: "current-weather-location",
+            text: weatherState.location
+        });
 
-        menuItem.actor.add_actor(icon);
-        menuItem.actor.add_actor(text);
+        let informationLayout = new St.BoxLayout({
+            vertical:true,
+            style_class : "current-weather-information"
+        });
+
+        informationLayout.add_actor(locationLabel);
+        informationLayout.add_actor(weatherHeaderLabel);
+
+        let weatherIcon = UiFactory.createIcon(weatherState.weatherStateIcon);
+
+        let menuItemLayout = new St.BoxLayout({
+            // style_class: 'openweather-current-iconbox'
+        });
+
+        menuItemLayout.add_actor(weatherIcon);
+        menuItemLayout.add_actor(informationLayout);
+
+        let menuItem = new PopupMenu.PopupBaseMenuItem({
+            reactive: false
+        });
+
+        menuItem.actor.add_actor(menuItemLayout);
         return menuItem;
+    },
+
+    createPoweredByMenuItem : () => {
+        let poweredByInfo = new PopupMenu.PopupBaseMenuItem({
+            reactive: false
+        });
+
+        let poweredByLabel = new St.Label({
+            text: PoweredByText
+        });
+
+        let informationLayout = new St.BoxLayout({
+            vertical:true
+        });
+
+
+        informationLayout.add_actor(poweredByLabel);
+
+        poweredByInfo.actor.add_actor(informationLayout);
+        return poweredByInfo;
     },
 
     formatWeatherStateHeader : (weatherState) => {
@@ -98,17 +139,6 @@ const PywMenuButton = new Lang.Class({
 
     _init: function() {
 
-        // Label
-        this._buttonLabel = new St.Label({
-            y_align: Clutter.ActorAlign.CENTER,
-            text: _("PYW")
-        });
-
-        this._buttonWeatherIcon = new St.Icon({
-            icon_name: "system-run-symbolic",
-            style_class: "system-status-icon"
-        });
-
         // Panel menu item - the current class
         let menuAlignment = 1.0 - (80 / 100);
         if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL){
@@ -117,43 +147,50 @@ const PywMenuButton = new Lang.Class({
 
         this.parent(menuAlignment);
 
+
+
+
+
+        this.initTrayButton();
+        this.initPopup();
+    },
+
+    initTrayButton : function(){
+        // Label
+        let _buttonLabel = new St.Label({
+            y_align: Clutter.ActorAlign.CENTER,
+            text: WeatherState.weatherStateHeader
+        });
+
+        let _buttonWeatherIcon = new St.Icon({
+            icon_name: WeatherState.weatherStateIcon,
+            style_class: "system-status-icon"
+        });
+
+        this.trayButton = {
+            icon  : _buttonLabel,
+            label : _buttonLabel
+        }
+
         // Putting the panel item together
         let buttonBox = new St.BoxLayout();
-        buttonBox.add_actor(this._buttonWeatherIcon);
-        buttonBox.add_actor(this._buttonLabel);
+        buttonBox.add_actor(_buttonWeatherIcon);
+        buttonBox.add_actor(_buttonLabel);
         this.actor.add_actor(buttonBox);
 
         let targetBox = Main.panel._leftBox
         let targetBoxChildren = targetBox.get_children();
         targetBox.insert_child_at_index(this.actor, targetBoxChildren.length);
 
-        if (Main.panel._menus === undefined){
-            Main.panel.menuManager.addMenu(this.menu);
-        }
-        else {
-            Main.panel._menus.addMenu(this.menu);
-        }
+        (Main.panel._menus || Main.panel.menuManager).addMenu(this.menu);
+    },
 
+    initPopup : function(){
         this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem(WeatherState);
-
-        this._itemFutureWeatherInfo = new PopupMenu.PopupBaseMenuItem({
-            reactive: false
-        });
-
-        this._separatorItem = new PopupMenu.PopupSeparatorMenuItem();
-
-
-
-
-        let button = UiFactory.createIconButton("SystemRun", ActionIcons.SystemRun);
-        this._itemFutureWeatherInfo.actor.add_actor(button);
-
-        button = UiFactory.createIconButton("PreferencesSystem", CategoriesIcons.PreferencesSystem);
-        this._itemFutureWeatherInfo.actor.add_actor(button);
-
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
-        this.menu.addMenuItem(this._separatorItem);
-        this.menu.addMenuItem(this._itemFutureWeatherInfo);
+
+        this._poweredByInfo = UiFactory.createPoweredByMenuItem(this);
+        this.menu.addMenuItem(this._poweredByInfo);
     },
 
     _onStatusChanged: function(status) {

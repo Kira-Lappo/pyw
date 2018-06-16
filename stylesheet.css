@@ -1,9 +1,18 @@
 
+.current-weather-information {
+    padding-left: .5em;
+}
 
 .current-weather-header {
     font-size: 26pt;
     color: #ffffff;
-    padding: .5em;
+}
 
-    background-color: rgba(0, 95, 90, 0.7);
+.current-weather-location {
+    font-size: 8pt;
+    color: #ffffff;
+}
+
+.weather-icon {
+    color: #ffffff;
 }
