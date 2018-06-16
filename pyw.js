@@ -40,17 +40,26 @@ const WeatherState = {
 
 const WeatherStateUpdater = {
 
-    _innerProvider : YandexWeatherProvider, // default provider
+    _innerProvider : new YandexWeatherProvider(), // default provider
 
     update : (weatherState) => {
 
-        var newState = WeatherStateUpdater.provider.getWeatherState();
+        var newState = WeatherStateUpdater.provider.getWeatherState((newState) => {
+            weatherState.temperature        = newState.temperature;
+            weatherState.weatherStateIcon   = newState.weatherStateIcon;
+            weatherState.weatherStateHeader = newState.weatherStateHeader;
+            weatherState.location           = newState.location;
+            weatherState.providerName       = newState.providerName;
+            log("kira", weatherState.temperature);
+            log("kira", weatherState.weatherStateIcon);
+            log("kira", weatherState.weatherStateHeader);
+        });
 
-        weatherState.temperature        = newState.temperature;
-        weatherState.weatherStateIcon   = newState.weatherStateIcon;
-        weatherState.weatherStateHeader = newState.weatherStateHeader;
-        weatherState.location           = newState.location;
-        weatherState.providerName       = newState.providerName;
+        // weatherState.temperature        = newState.temperature;
+        // weatherState.weatherStateIcon   = newState.weatherStateIcon;
+        // weatherState.weatherStateHeader = newState.weatherStateHeader;
+        // weatherState.location           = newState.location;
+        // weatherState.providerName       = newState.providerName;
     },
 
     get provider() {
@@ -114,6 +123,7 @@ const UiUtils = {
 const UiFactory = {
     createIconButton : (accessibleName, iconName) => {
         button = Main.panel.statusArea.aggregateMenu._system._createActionButton(iconName, accessibleName);
+        button.name = accessibleName;
         return button
     },
 
@@ -128,7 +138,7 @@ const UiFactory = {
         return icon;
     },
 
-    createCurrentWeatherPopupMenuItem : () => {
+    createCurrentWeatherPopupMenuItem : (uiContext) => {
         let weatherHeaderLabel = new St.Label({
             style_class: "current-weather-header",
             text: NoDataText,
@@ -150,8 +160,16 @@ const UiFactory = {
             name : "informationLayout",
         });
 
+        let button = UiFactory.createIconButton("updateButton", RadioIcons.Unchecked);
+        button.connect("clicked", () => {
+            WeatherStateUpdater.update(WeatherState)
+            uiContext.refreshTrayButton(WeatherState);
+            uiContext.refreshPopup(WeatherState, WeatherSettings);
+        });
+
         informationLayout.add_child(locationLabel);
         informationLayout.add_child(weatherHeaderLabel);
+        informationLayout.add_child(button);
 
         let weatherIcon = UiFactory.createIcon(RadioIcons.Unchecked, "currentWeatherIcon");
 
@@ -241,7 +259,7 @@ const PywMenuButton = new Lang.Class({
     },
 
     initPopup : function(){
-        this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem(WeatherState);
+        this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem(this);
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
 
         this._poweredByInfo = UiFactory.createPoweredByMenuItem(this);

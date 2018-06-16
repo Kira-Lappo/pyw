@@ -1,6 +1,5 @@
-
+const GLib = imports.gi.GLib;
 const Soup = imports.gi.Soup;
-
 
 // Import icon names
 const IconNames = imports.iconNames;
@@ -13,49 +12,57 @@ const RadioIcons        = IconNames.StatusIcons.Radio;
 const YandexWeatherApiPATValue = "feaaa0e3-cb0a-4d17-9228-20bd91cf19b0"; // Testing mode key
 const YandexWeatherApiPATHeader = "X-Yandex-API-Key";
 
-const YandexWeatherProvider = {
-    getWeatherState : () => {
-        let weatherState = {
-            temperature                 : 0,
-            weatherStateIcon            : RadioIcons.Unchecked,
-            weatherStateHeader          : "NoDataText",
-            location                    : "NoDataText",
-            providerName                : "NoDataText"
-        };
+function YandexWeatherProvider() {
+    return {
+        getWeatherState : (callbackFunc) => {
+            let weatherState = {
+                temperature                 : 0,
+                weatherStateIcon            : RadioIcons.Unchecked,
+                weatherStateHeader          : "NoDataText",
+                location                    : "NoDataText",
+                providerName                : "NoDataText"
+            };
 
-        let requestUri = "https://api.weather.yandex.ru/v1/forecast"
-            + "?lat=53.9"
-            + "&lon=27.56667"
-            + "&lang=en_US"
-            + "&limit=1"
-            + "&hours=false"
-            + "&extra=false";
+            let requestUri = "https://api.weather.yandex.ru/v1/forecast"
+                + "?lat=53.9"
+                + "&lon=27.56667"
+                + "&lang=en_US"
+                + "&limit=1"
+                + "&hours=false"
+                + "&extra=false";
 
-        // const HttpSession = new Soup.SessionAsync();
-        // Soup.Session.prototype.add_feature.call(_httpSession, new Soup.ProxyResolverDefault());
+            const HttpSession = new Soup.SessionAsync();
+            Soup.Session.prototype.add_feature.call(HttpSession, new Soup.ProxyResolverDefault());
 
-        // create an http message
-        // var request = Soup.Message.new('GET', requestUri);
+            // create an http message
+            var request = Soup.Message.new('GET', requestUri);
 
-        // HttpSession.queue_message(request, function(_httpSession, message) {
-        //     if (message.status_code !== 200) {
-        //         return;
-        //     }
+            request.request_headers.append(YandexWeatherApiPATHeader, YandexWeatherApiPATValue);
+            HttpSession.queue_message(request, function(httpSession, message) {
+                if (message.status_code !== 200) {
+                    return;
+                }
 
-        //     var responseBody = request.response_body.data;
-        //     var responseJson = JSON.parse(responseBody);
+                var responseBody = request.response_body.data;
+                var responseJson = JSON.parse(responseBody);
 
-        //     var fact = responseJson.fact;
+                var fact = responseJson.fact;
 
-        //     weatherState.temperature                = fact.temp;
-        //     weatherState.weatherStateIcon           = WeatherIcons.Snow;
-        //     weatherState.weatherStateHeader         = YandexProviderConverter.getWeatherIcon(fact.condition);
-        //     weatherState.location                   = fact.tzinfo.name;
-        //     weatherState.providerName               = "Yandex.Weather";
-        //   });
+                weatherState.temperature                = fact.temp;
+                weatherState.weatherStateIcon           = YandexProviderConverter.getWeatherIcon(fact.condition);
+                weatherState.weatherStateHeader         = fact.condition;
+                weatherState.location                   = responseJson.info.tzinfo.name;
+                weatherState.providerName               = "Yandex.Weather";
 
-        return weatherState;
-    },
+                log("kira", weatherState.providerName);
+
+
+                callbackFunc(weatherState);
+            });
+
+            return weatherState;
+        }
+    }
 };
 
 const YandexProviderConverter = {
