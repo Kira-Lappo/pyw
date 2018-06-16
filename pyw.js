@@ -159,7 +159,7 @@ const PywMenuButton = new Lang.Class({
         // Label
         let _buttonLabel = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
-            text: "~"
+            text: "no data"
         });
 
         let _buttonWeatherIcon = new St.Icon({
@@ -168,8 +168,8 @@ const PywMenuButton = new Lang.Class({
         });
 
         this.trayButton = {
-            icon  : _buttonLabel,
-            label : _buttonLabel
+            weatherIcon  : _buttonLabel,
+            weatherLabel : _buttonLabel
         }
 
         // Putting the panel item together
@@ -194,8 +194,8 @@ const PywMenuButton = new Lang.Class({
     },
 
     refreshTrayButton : function(weatherState) {
-        this.trayButton.icon.icon_name = weatherState.weatherStateIcon;
-        this.trayButton.label.text = weatherState.weatherStateHeader;
+        this.trayButton.weatherIcon.icon_name = weatherState.weatherStateIcon || RadioIcons.Unchecked;
+        this.trayButton.weatherLabel.text = weatherState.weatherStateHeader || "no data";
     },
 
     refreshPopup : function(weatherState) {
