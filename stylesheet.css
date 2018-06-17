@@ -18,3 +18,16 @@
 .provider-info-last-updated {
     float: right;
 }
+
+.button-panel {
+    padding-left: .5em;
+}
+
+.link-button {
+    text-decoration: underline;
+    cursor: grab;
+}
+
+.link-button:hover {
+    color: lightblue;
+}

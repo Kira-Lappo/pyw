@@ -6,13 +6,9 @@ const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
-const Tweener = imports.ui.tweener;
 
 // Import icon names
-const ActionIcons       = imports.iconNames.ActionIcons;
-const CategoriesIcons   = imports.iconNames.CategoriesIcons;
 const EmblemIcons       = imports.iconNames.EmblemIcons;
-const WeatherIcons      = imports.iconNames.StatusIcons.Weather;
 const RadioIcons        = imports.iconNames.StatusIcons.Radio;
 
 // Import scales
@@ -23,9 +19,9 @@ const YandexWeatherProvider = imports.providers.yandexWeatherProvider.YandexWeat
 const Locale = imports.localeProvider.Locale;
 const LocaleProvider = imports.localeProvider.LocaleProvider;
 
-const PoweredByText         = "Powered by ";
-const LastUpdatedDateTimeText         = "Updated: ";
-const NoDataText            = "no-data";
+const PoweredByText                 = "Powered by ";
+const LastUpdatedDateTimeText       = "Updated: ";
+const NoDataText                    = "no-data";
 
 const WeatherSettings = {
     temperatureScale            : TemperatureScale.CELSIUS,
@@ -88,13 +84,14 @@ const WeatherStateUpdater = {
 
 const UiUtils = {
     findChildActor : (actor) => {
-        if (arguments.length <= 1){
+        if (!actor || arguments.length <= 1) {
+            log("kira", "arguments number is lesser than 2 or <" + actor + "> is undefined, returnin actor itself");
             return actor;
         }
 
         for (let i = 1; i < arguments.length; i++) {
             actor = actor.find_child_by_name(arguments[i]);
-            if (actor === undefined){
+            if (!actor){
                 return actor;
             }
         }
@@ -151,7 +148,7 @@ const UiFactory = {
         name = name || Math.random().toString();
         var icon =  new St.Icon({
             icon_name: iconName,
-            style_class: "system-status-icon weather-icon",
+            // style_class: "system-status-icon ",
             accessible_name : name,
             name : name
         });
@@ -160,7 +157,9 @@ const UiFactory = {
     },
 
     createCurrentWeatherPopupMenuItem : () => {
+
         let weatherHeaderLabel = new St.Label({
+            x_align:  St.Align.START,
             style_class: "current-weather-header",
             text: NoDataText,
             accessible_name : "weatherHeaderLabel",
@@ -168,6 +167,7 @@ const UiFactory = {
         });
 
         let locationLabel = new St.Label({
+            x_align:  St.Align.START,
             style_class: "current-weather-location",
             text: NoDataText,
             accessible_name : "locationLabel",
@@ -185,6 +185,7 @@ const UiFactory = {
         informationLayout.add_child(weatherHeaderLabel);
 
         let weatherIcon = UiFactory.createIcon(RadioIcons.Unchecked, "currentWeatherIcon");
+        weatherIcon.style_class += " weather-icon";
 
         let menuItemLayout = new St.BoxLayout({
             accessible_name : "currentWeatherLayout",
@@ -202,32 +203,13 @@ const UiFactory = {
         return menuItem;
     },
 
-    createButtonsMenuItem : (uiContext) => {
-        let controlButtonsMenuItem = new PopupMenu.PopupBaseMenuItem({
-            reactive: false
-        });
-
-        let menuItemLayout = new St.BoxLayout({
-            accessible_name : "buttonsLayout",
-            name : "buttonsLayout"
-        });
-
-        let refreshButton = UiFactory.createIconButton("refreshButton", EmblemIcons.Synchronizing);
-        refreshButton.connect("clicked", () => {
-            uiContext.refresh();
-        });
-
-        menuItemLayout.add_child(refreshButton);
-        controlButtonsMenuItem.actor.add_child(menuItemLayout);
-        return controlButtonsMenuItem;
-    },
-
     createPoweredByMenuItem : (uiContext) => {
-        let poweredByInfo = new PopupMenu.PopupBaseMenuItem({
+        let menuItemInfo = new PopupMenu.PopupBaseMenuItem({
             reactive: false
         });
 
         let poweredByLabel = new St.Button({
+            style_class : "link-button",
             x_align:  St.Align.START,
             reactive: true,
             can_focus: true,
@@ -246,23 +228,45 @@ const UiFactory = {
 
         let lastUpdatedDateTime = new St.Label({
             x_align:  St.Align.START,
-            style_class: "provider-info-last-updated",
             text : NoDataText,
             name : "lastUpdatedDateTime"
         });
 
-        let menuItemLayout = new St.BoxLayout({
-            x_align:  St.Align.START,
+        let poweredByLayout = new St.BoxLayout({
+            y_align : Clutter.ActorAlign.CENTER,
             vertical: true,
+            accessible_name : "poweredByLayout",
+            name : "poweredByLayout"
+        });
+
+        poweredByLayout.add_child(poweredByLabel);
+        poweredByLayout.add_child(lastUpdatedDateTime);
+
+        let buttonsLayout = new St.BoxLayout({
+            y_align : Clutter.ActorAlign.CENTER,
+            style_class: "button-panel",
+            accessible_name : "buttonsLayout",
+            name : "buttonsLayout"
+        });
+
+        let refreshButton = UiFactory.createIconButton("refreshButton", EmblemIcons.Synchronizing);
+        refreshButton.x_align = St.Align.END;
+        refreshButton.connect("clicked", () => {
+            uiContext.refresh();
+        });
+
+        buttonsLayout.add_child(refreshButton);
+
+        let layout = new St.BoxLayout({
             accessible_name : "layout",
             name : "layout"
         });
 
-        menuItemLayout.add_actor(poweredByLabel);
-        menuItemLayout.add_actor(lastUpdatedDateTime);
+        layout.add_child(poweredByLayout);
+        layout.add_child(buttonsLayout);
 
-        poweredByInfo.actor.add_actor(menuItemLayout);
-        return poweredByInfo;
+        menuItemInfo.actor.add_actor(layout);
+        return menuItemInfo;
     }
 };
 
@@ -290,7 +294,7 @@ const PywMenuButton = new Lang.Class({
 
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1 * 60 * 60 * 1000, function() {
             this.refresh();
-            return true; // Don't repeat
+            return true; // Repeat each hour
         }, null);
     },
 
@@ -320,9 +324,6 @@ const PywMenuButton = new Lang.Class({
     initPopup : function(){
         this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem();
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
-
-        this._controlButtonsInfo = UiFactory.createButtonsMenuItem(this);
-        this.menu.addMenuItem(this._controlButtonsInfo);
 
         this._poweredByInfo = UiFactory.createPoweredByMenuItem(this);
         this.menu.addMenuItem(this._poweredByInfo);
@@ -357,10 +358,10 @@ const PywMenuButton = new Lang.Class({
         locationLabel.text = weatherState.location;
 
         // Powered by
-        let poweredByLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "layout", "poweredByLabel");
+        let poweredByLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "layout", "poweredByLayout", "poweredByLabel");
         poweredByLabel.set_label(PoweredByText + WeatherStateUpdater.provider.name);
 
-        let lastUpdatedLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "layout", "lastUpdatedDateTime");
+        let lastUpdatedLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "layout", "poweredByLayout", "lastUpdatedDateTime");
         lastUpdatedLabel.text = LastUpdatedDateTimeText + WeatherState.lastUpdatedDateTime.toLocaleString();
     },
 
