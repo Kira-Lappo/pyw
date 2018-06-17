@@ -19,16 +19,21 @@ const RadioIcons        = IconNames.StatusIcons.Radio;
 const TemperatureScaleLib = imports.temperatureScale;
 const TemperatureScale = TemperatureScaleLib.TemperatureScale;
 
-const YandexWeatherProviderLib = imports.yandexWeatherProvider;
+const YandexWeatherProviderLib = imports.providers.yandexWeatherProvider;
 const YandexWeatherProvider = YandexWeatherProviderLib.YandexWeatherProvider;
 
-const PoweredByText         = _("Powered by ");
-const NoDataText            = _("no-data");
+const PoweredByText         = "Powered by ";
+const NoDataText            = "no-data";
 
 const WeatherSettings = {
     temperatureScale            : TemperatureScale.CELSIUS
 }
 
+// Minsk only for now
+const WeatherStateUpdateRequest = {
+    latitude    : 53.9,
+    longitute   : 27.56667
+}
 
 const WeatherState = {
     temperature                 : 0,
@@ -42,24 +47,31 @@ const WeatherStateUpdater = {
 
     _innerProvider : new YandexWeatherProvider(), // default provider
 
-    update : (weatherState) => {
+    update : (weatherState, callBack) => {
 
-        var newState = WeatherStateUpdater.provider.getWeatherState((newState) => {
-            weatherState.temperature        = newState.temperature;
-            weatherState.weatherStateIcon   = newState.weatherStateIcon;
-            weatherState.weatherStateHeader = newState.weatherStateHeader;
-            weatherState.location           = newState.location;
-            weatherState.providerName       = newState.providerName;
-            log("kira", weatherState.temperature);
-            log("kira", weatherState.weatherStateIcon);
-            log("kira", weatherState.weatherStateHeader);
-        });
+        // Just in case if callback is undefined
+        callBack = callBack || (()=>{});
 
-        // weatherState.temperature        = newState.temperature;
-        // weatherState.weatherStateIcon   = newState.weatherStateIcon;
-        // weatherState.weatherStateHeader = newState.weatherStateHeader;
-        // weatherState.location           = newState.location;
-        // weatherState.providerName       = newState.providerName;
+        try {
+                WeatherStateUpdater.provider.getWeatherState(WeatherStateUpdateRequest, (newState) => {
+                weatherState.temperature        = newState.temperature;
+                weatherState.weatherStateIcon   = newState.weatherStateIcon;
+                weatherState.weatherStateHeader = newState.weatherStateHeader;
+                weatherState.location           = newState.location;
+                weatherState.providerName       = newState.providerName;
+
+                callBack(weatherState);
+
+                log("kira", weatherState.temperature);
+                log("kira", weatherState.weatherStateIcon);
+                log("kira", weatherState.weatherStateHeader);
+            });
+
+        }
+        catch(e){
+            log("kira", e.toString());
+            callBack(weatherState);
+        }
     },
 
     get provider() {
@@ -72,7 +84,7 @@ const WeatherStateUpdater = {
 }
 
 const UiUtils = {
-    findChildActorByNamePath : (actor) => {
+    findChildActor : (actor) => {
         if (arguments.length <= 1){
             return actor;
         }
@@ -95,9 +107,7 @@ const UiUtils = {
         var header = ""
             + weatherState.weatherStateHeader
             + ", "
-            + UiUtils.convertTemperature(weatherState.temperature, weatherSettings.temperatureScale)
-            + " "
-            + weatherSettings.temperatureScale;
+            + UiUtils.formatTemperature(weatherState.temperature, weatherSettings.temperatureScale);
 
             return header;
     },
@@ -118,27 +128,35 @@ const UiUtils = {
         };
 
         return value.toFixed(0);
+    },
+
+    formatTemperature : (tempreatureValue, scale) => {
+        return UiUtils.convertTemperature(tempreatureValue, scale)
+            + " "
+            + scale
     }
 }
+
 const UiFactory = {
     createIconButton : (accessibleName, iconName) => {
-        button = Main.panel.statusArea.aggregateMenu._system._createActionButton(iconName, accessibleName);
+        var button = Main.panel.statusArea.aggregateMenu._system._createActionButton(iconName, accessibleName);
         button.name = accessibleName;
         return button
     },
 
     createIcon : (iconName, name) => {
+        name = name || Math.random().toString();
         var icon =  new St.Icon({
             icon_name: iconName,
             style_class: "system-status-icon weather-icon",
-            accessible_name : name || Math.random().toString(),
-            name : name || Math.random().toString()
+            accessible_name : name,
+            name : name
         });
 
         return icon;
     },
 
-    createCurrentWeatherPopupMenuItem : (uiContext) => {
+    createCurrentWeatherPopupMenuItem : () => {
         let weatherHeaderLabel = new St.Label({
             style_class: "current-weather-header",
             text: NoDataText,
@@ -160,16 +178,8 @@ const UiFactory = {
             name : "informationLayout",
         });
 
-        let button = UiFactory.createIconButton("updateButton", RadioIcons.Unchecked);
-        button.connect("clicked", () => {
-            WeatherStateUpdater.update(WeatherState)
-            uiContext.refreshTrayButton(WeatherState);
-            uiContext.refreshPopup(WeatherState, WeatherSettings);
-        });
-
         informationLayout.add_child(locationLabel);
         informationLayout.add_child(weatherHeaderLabel);
-        informationLayout.add_child(button);
 
         let weatherIcon = UiFactory.createIcon(RadioIcons.Unchecked, "currentWeatherIcon");
 
@@ -187,6 +197,26 @@ const UiFactory = {
 
         menuItem.actor.add_child(menuItemLayout);
         return menuItem;
+    },
+
+    createButtonsMenuItem : (uiContext) => {
+        let controlButtonsMenuItem = new PopupMenu.PopupBaseMenuItem({
+            reactive: false
+        });
+
+        let menuItemLayout = new St.BoxLayout({
+            accessible_name : "buttonsLayout",
+            name : "buttonsLayout"
+        });
+
+        let refreshButton = UiFactory.createIconButton("refreshButton", EmblemIcons.Synchronizing);
+        refreshButton.connect("clicked", () => {
+            uiContext.refresh();
+        });
+
+        menuItemLayout.add_child(refreshButton);
+        controlButtonsMenuItem.actor.add_child(menuItemLayout);
+        return controlButtonsMenuItem;
     },
 
     createPoweredByMenuItem : () => {
@@ -222,100 +252,84 @@ const PywMenuButton = new Lang.Class({
         this.initTrayButton();
         this.initPopup();
 
-        WeatherStateUpdater.update(WeatherState)
+        this.addToTray();
 
-        this.refreshTrayButton(WeatherState);
-        this.refreshPopup(WeatherState, WeatherSettings);
+        this.refresh();
     },
 
     initTrayButton : function(){
-        // Label
-        let _buttonLabel = new St.Label({
+
+        let buttonLabel = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
-            text: NoDataText
+            text: NoDataText,
+            name: "label"
         });
 
-        let _buttonWeatherIcon = new St.Icon({
+        let buttonWeatherIcon = new St.Icon({
             icon_name: RadioIcons.Unchecked,
-            style_class: "system-status-icon"
+            style_class: "system-status-icon",
+            name : "icon",
         });
 
-        this.trayButton = {
-            weatherIcon  : _buttonWeatherIcon,
-            weatherLabel : _buttonLabel
-        }
+        let buttonBox = new St.BoxLayout({
+            name: "trayButtonlayout"
+        });
 
-        // Putting the panel item together
-        let buttonBox = new St.BoxLayout();
-        buttonBox.add_actor(_buttonWeatherIcon);
-        buttonBox.add_actor(_buttonLabel);
+        buttonBox.add_actor(buttonWeatherIcon);
+        buttonBox.add_actor(buttonLabel);
         this.actor.add_actor(buttonBox);
+    },
 
+    initPopup : function(){
+        this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem();
+        this.menu.addMenuItem(this._itemCurrentWeatherInfo);
+
+        this._controlButtonsInfo = UiFactory.createButtonsMenuItem(this)
+        this.menu.addMenuItem(this._controlButtonsInfo);
+
+        this._poweredByInfo = UiFactory.createPoweredByMenuItem();
+        this.menu.addMenuItem(this._poweredByInfo);
+    },
+
+    refresh : function() {
+        WeatherStateUpdater.update(WeatherState, (newWeatherState) => {
+            this.refreshTrayButton(newWeatherState, WeatherSettings);
+            this.refreshPopup(newWeatherState, WeatherSettings);
+        });
+    },
+
+    refreshTrayButton : function(weatherState, weatherSettings) {
+        let trayIcon = UiUtils.findChildActor(this.actor, "trayButtonlayout", "icon");
+        trayIcon.icon_name = weatherState.weatherStateIcon || RadioIcons.Unchecked;
+
+        let trayLabel = UiUtils.findChildActor(this.actor, "trayButtonlayout", "label");
+        trayLabel.text = UiUtils.formatTemperature(weatherState.temperature, weatherSettings.temperatureScale) || "no data";
+    },
+
+    refreshPopup : function(weatherState, weatherSettings) {
+        // Update Current Weather Icon
+        let currentWeatherIcon = UiUtils.findChildActor(this._itemCurrentWeatherInfo.actor, "currentWeatherLayout", "currentWeatherIcon");
+        currentWeatherIcon.icon_name = weatherState.weatherStateIcon || RadioIcons.Unchecked;
+
+        // Update Weather Header
+        let currentWeatherHeader = UiUtils.findChildActor(this._itemCurrentWeatherInfo.actor, "currentWeatherLayout", "informationLayout", "weatherHeaderLabel");
+        currentWeatherHeader.text = UiUtils.formatWeatherStateHeader(weatherState, weatherSettings);
+
+        // Update Location
+        let locationLabel = UiUtils.findChildActor(this._itemCurrentWeatherInfo.actor, "currentWeatherLayout", "informationLayout", "locationLabel");
+        locationLabel.text = weatherState.location;
+
+        // Powered by
+        let poweredByLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "poweredByLabel");
+        poweredByLabel.text = PoweredByText + weatherState.providerName;
+    },
+
+    addToTray: function() {
         let targetBox = Main.panel._leftBox
         let targetBoxChildren = targetBox.get_children();
         targetBox.insert_child_at_index(this.actor, targetBoxChildren.length);
 
         (Main.panel._menus || Main.panel.menuManager).addMenu(this.menu);
-    },
-
-    initPopup : function(){
-        this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem(this);
-        this.menu.addMenuItem(this._itemCurrentWeatherInfo);
-
-        this._poweredByInfo = UiFactory.createPoweredByMenuItem(this);
-        this.menu.addMenuItem(this._poweredByInfo);
-    },
-
-    refreshTrayButton : function(weatherState) {
-        this.trayButton.weatherIcon.icon_name = weatherState.weatherStateIcon || RadioIcons.Unchecked;
-        this.trayButton.weatherLabel.text = weatherState.weatherStateHeader || "no data";
-    },
-
-    refreshPopup : function(weatherState, weatherSettings) {
-        // Update Current Weather
-        // Update Current Weather Icon
-        UiUtils.findChildActorByNamePath(this._itemCurrentWeatherInfo.actor,
-                "currentWeatherLayout",
-                "currentWeatherIcon")
-            .icon_name = weatherState.weatherStateIcon || RadioIcons.Unchecked;
-
-        // Update Weather Header
-        UiUtils.findChildActorByNamePath(this._itemCurrentWeatherInfo.actor,
-                "currentWeatherLayout",
-                "informationLayout",
-                "weatherHeaderLabel")
-            .text = UiUtils.formatWeatherStateHeader(weatherState, weatherSettings);
-
-        // Update Location
-        UiUtils.findChildActorByNamePath(this._itemCurrentWeatherInfo.actor,
-            "currentWeatherLayout",
-            "informationLayout",
-            "locationLabel")
-        .text = weatherState.location;
-
-        UiUtils.findChildActorByNamePath(this._poweredByInfo.actor,
-            "poweredByLabel")
-        .text = PoweredByText + weatherState.providerName;
-    },
-
-    _onStatusChanged: function(status) {
-        this._idle = (status == GnomeSession.PresenceStatus.IDLE);
-    },
-
-    _onButtonHoverChanged: function(actor, event) {
-        if (actor.hover) {
-            actor.add_style_pseudo_class("hover");
-            actor.set_style(this._button_background_style);
-        } else {
-            actor.remove_style_pseudo_class("hover");
-            actor.set_style("background-color:;");
-            // if (actor != this._urlButton){
-            //     actor.set_style(this._button_border_style);
-            // }
-        }
-    },
-
-    _onScroll: function(actor, event) {
     }
 });
 

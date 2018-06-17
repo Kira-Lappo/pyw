@@ -1,13 +1,16 @@
 imports.searchPath.unshift("/home/kira/.local/share/gnome-shell/extensions/pretty-yandex-weather@dnaplayer.hmail.com");
+// imports.searchPath.unshift("./"); // not working
+// imports.searchPath.unshift("~/.local/share/gnome-shell/extensions/pretty-yandex-weather@dnaplayer.hmail.com"); // not working
 
-const Lang = imports.lang;
+log("kira",imports.searchPath);
+
 const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const St = imports.gi.St;
-const Tweener = imports.ui.tweener;
-
+try{
 const Pyw = imports.pyw;
+}
+catch(e){
+    log("kira", e);
+}
 
 let button;
 

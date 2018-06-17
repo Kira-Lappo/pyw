@@ -14,22 +14,24 @@ const YandexWeatherApiPATHeader = "X-Yandex-API-Key";
 
 function YandexWeatherProvider() {
     return {
-        getWeatherState : (callbackFunc) => {
+        getWeatherState : (request, callbackFunc) => {
+            callbackFunc = callbackFunc || (() => {});
+
             let weatherState = {
                 temperature                 : 0,
                 weatherStateIcon            : RadioIcons.Unchecked,
                 weatherStateHeader          : "NoDataText",
                 location                    : "NoDataText",
-                providerName                : "NoDataText"
+                providerName                : "Yandex.Weather"
             };
 
-            let requestUri = "https://api.weather.yandex.ru/v1/forecast"
-                + "?lat=53.9"
-                + "&lon=27.56667"
-                + "&lang=en_US"
-                + "&limit=1"
-                + "&hours=false"
-                + "&extra=false";
+        let requestUri = "https://api.weather.yandex.ru/v1/forecast"
+            + "?lat=" + request.latitude
+            + "&lon=" + request.longtitude
+            + "&lang=en_US"
+            + "&limit=1"
+            + "&hours=false"
+            + "&extra=false";
 
             const HttpSession = new Soup.SessionAsync();
             Soup.Session.prototype.add_feature.call(HttpSession, new Soup.ProxyResolverDefault());
@@ -38,8 +40,11 @@ function YandexWeatherProvider() {
             var request = Soup.Message.new('GET', requestUri);
 
             request.request_headers.append(YandexWeatherApiPATHeader, YandexWeatherApiPATValue);
+
             HttpSession.queue_message(request, function(httpSession, message) {
                 if (message.status_code !== 200) {
+                    log("kira","Status code : " + message.status_code + " Request : GET " + requestUri);
+                    callbackFunc(weatherState);
                     return;
                 }
 
@@ -52,15 +57,9 @@ function YandexWeatherProvider() {
                 weatherState.weatherStateIcon           = YandexProviderConverter.getWeatherIcon(fact.condition);
                 weatherState.weatherStateHeader         = fact.condition;
                 weatherState.location                   = responseJson.info.tzinfo.name;
-                weatherState.providerName               = "Yandex.Weather";
-
-                log("kira", weatherState.providerName);
-
 
                 callbackFunc(weatherState);
             });
-
-            return weatherState;
         }
     }
 };
