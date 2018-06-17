@@ -5,12 +5,7 @@ imports.searchPath.unshift("/home/kira/.local/share/gnome-shell/extensions/prett
 log("kira",imports.searchPath);
 
 const Main = imports.ui.main;
-try{
 const Pyw = imports.pyw;
-}
-catch(e){
-    log("kira", e);
-}
 
 let button;
 
@@ -19,7 +14,7 @@ function init() {
 }
 
 function enable() {
-    Main.panel.addToStatusArea('pywMenu', button);
+    Main.panel.addToStatusArea("pywMenu", button);
 }
 
 function disable() {

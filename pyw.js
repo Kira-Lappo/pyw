@@ -8,40 +8,41 @@ const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 
 // Import icon names
-const IconNames = imports.iconNames;
-const ActionIcons       = IconNames.ActionIcons;
-const CategoriesIcons   = IconNames.CategoriesIcons;
-const EmblemIcons       = IconNames.EmblemIcons;
-const WeatherIcons      = IconNames.StatusIcons.Weather;
-const RadioIcons        = IconNames.StatusIcons.Radio;
+const ActionIcons       = imports.iconNames.ActionIcons;
+const CategoriesIcons   = imports.iconNames.CategoriesIcons;
+const EmblemIcons       = imports.iconNames.EmblemIcons;
+const WeatherIcons      = imports.iconNames.StatusIcons.Weather;
+const RadioIcons        = imports.iconNames.StatusIcons.Radio;
 
 // Import scales
-const TemperatureScaleLib = imports.temperatureScale;
-const TemperatureScale = TemperatureScaleLib.TemperatureScale;
+const TemperatureScale = imports.temperatureScale.TemperatureScale;
 
-const YandexWeatherProviderLib = imports.providers.yandexWeatherProvider;
-const YandexWeatherProvider = YandexWeatherProviderLib.YandexWeatherProvider;
+const YandexWeatherProvider = imports.providers.yandexWeatherProvider.YandexWeatherProvider;
+
+const Locale = imports.localeProvider.Locale;
+const LocaleProvider = imports.localeProvider.LocaleProvider;
 
 const PoweredByText         = "Powered by ";
 const NoDataText            = "no-data";
 
 const WeatherSettings = {
-    temperatureScale            : TemperatureScale.CELSIUS
-}
+    temperatureScale            : TemperatureScale.CELSIUS,
+    locale                      : Locale.RUSSIAN,
+};
 
 // Minsk only for now
 const WeatherStateUpdateRequest = {
     latitude    : 53.9,
-    longitute   : 27.56667
-}
+    longitute   : 27.56667,
+    locale      : Locale.RUSSIAN
+};
 
 const WeatherState = {
     temperature                 : 0,
     weatherStateIcon            : RadioIcons.Unchecked,
     weatherStateHeader          : NoDataText,
-    location                    : NoDataText,
-    providerName                : NoDataText
-}
+    location                    : NoDataText
+};
 
 const WeatherStateUpdater = {
 
@@ -53,12 +54,11 @@ const WeatherStateUpdater = {
         callBack = callBack || (()=>{});
 
         try {
-                WeatherStateUpdater.provider.getWeatherState(WeatherStateUpdateRequest, (newState) => {
+            WeatherStateUpdater.provider.getWeatherState(WeatherStateUpdateRequest, (newState) => {
                 weatherState.temperature        = newState.temperature;
                 weatherState.weatherStateIcon   = newState.weatherStateIcon;
                 weatherState.weatherStateHeader = newState.weatherStateHeader;
                 weatherState.location           = newState.location;
-                weatherState.providerName       = newState.providerName;
 
                 callBack(weatherState);
 
@@ -66,7 +66,6 @@ const WeatherStateUpdater = {
                 log("kira", weatherState.weatherStateIcon);
                 log("kira", weatherState.weatherStateHeader);
             });
-
         }
         catch(e){
             log("kira", e.toString());
@@ -81,7 +80,7 @@ const WeatherStateUpdater = {
     set provider(value) {
         this._innerProvider = value;
     }
-}
+};
 
 const UiUtils = {
     findChildActor : (actor) => {
@@ -109,23 +108,23 @@ const UiUtils = {
             + ", "
             + UiUtils.formatTemperature(weatherState.temperature, weatherSettings.temperatureScale);
 
-            return header;
+        return header;
     },
 
     convertTemperature : (originalValue, scale) => {
         var value = 0;
         switch (scale){
-            case TemperatureScale.FARENHEIT :
-                value = originalValue * 1.8 + 32;
-                break;
-            case TemperatureScale.KELVIN :
-                value =  originalValue + 273.15;
-                break;
-            case TemperatureScale.CELSIUS :
-            default:
-                value = originalValue;
-                break;
-        };
+        case TemperatureScale.FARENHEIT :
+            value = originalValue * 1.8 + 32;
+            break;
+        case TemperatureScale.KELVIN :
+            value =  originalValue + 273.15;
+            break;
+        case TemperatureScale.CELSIUS :
+        default:
+            value = originalValue;
+            break;
+        }
 
         return value.toFixed(0);
     },
@@ -133,15 +132,15 @@ const UiUtils = {
     formatTemperature : (tempreatureValue, scale) => {
         return UiUtils.convertTemperature(tempreatureValue, scale)
             + " "
-            + scale
+            + scale;
     }
-}
+};
 
 const UiFactory = {
     createIconButton : (accessibleName, iconName) => {
         var button = Main.panel.statusArea.aggregateMenu._system._createActionButton(iconName, accessibleName);
         button.name = accessibleName;
-        return button
+        return button;
     },
 
     createIcon : (iconName, name) => {
@@ -284,7 +283,7 @@ const PywMenuButton = new Lang.Class({
         this._itemCurrentWeatherInfo = UiFactory.createCurrentWeatherPopupMenuItem();
         this.menu.addMenuItem(this._itemCurrentWeatherInfo);
 
-        this._controlButtonsInfo = UiFactory.createButtonsMenuItem(this)
+        this._controlButtonsInfo = UiFactory.createButtonsMenuItem(this);
         this.menu.addMenuItem(this._controlButtonsInfo);
 
         this._poweredByInfo = UiFactory.createPoweredByMenuItem();
@@ -321,11 +320,11 @@ const PywMenuButton = new Lang.Class({
 
         // Powered by
         let poweredByLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "poweredByLabel");
-        poweredByLabel.text = PoweredByText + weatherState.providerName;
+        poweredByLabel.text = PoweredByText + WeatherStateUpdater.provider.name;
     },
 
     addToTray: function() {
-        let targetBox = Main.panel._leftBox
+        let targetBox = Main.panel._leftBox;
         let targetBoxChildren = targetBox.get_children();
         targetBox.insert_child_at_index(this.actor, targetBoxChildren.length);
 
