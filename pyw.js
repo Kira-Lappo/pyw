@@ -1,5 +1,6 @@
-
 const Clutter = imports.gi.Clutter;
+const Gtk = imports.gi.Gtk;
+const GLib = imports.gi.GLib;
 const Lang = imports.lang;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
@@ -23,6 +24,7 @@ const Locale = imports.localeProvider.Locale;
 const LocaleProvider = imports.localeProvider.LocaleProvider;
 
 const PoweredByText         = "Powered by ";
+const LastUpdatedDateTimeText         = "Updated: ";
 const NoDataText            = "no-data";
 
 const WeatherSettings = {
@@ -38,6 +40,7 @@ const WeatherStateUpdateRequest = {
 };
 
 const WeatherState = {
+    lastUpdatedDateTime         : new Date(),
     temperature                 : 0,
     weatherStateIcon            : RadioIcons.Unchecked,
     weatherStateHeader          : NoDataText,
@@ -55,10 +58,11 @@ const WeatherStateUpdater = {
 
         try {
             WeatherStateUpdater.provider.getWeatherState(WeatherStateUpdateRequest, (newState) => {
-                weatherState.temperature        = newState.temperature;
-                weatherState.weatherStateIcon   = newState.weatherStateIcon;
-                weatherState.weatherStateHeader = newState.weatherStateHeader;
-                weatherState.location           = newState.location;
+                weatherState.temperature            = newState.temperature;
+                weatherState.weatherStateIcon       = newState.weatherStateIcon;
+                weatherState.weatherStateHeader     = newState.weatherStateHeader;
+                weatherState.location               = newState.location;
+                weatherState.lastUpdatedDateTime    = new Date();
 
                 callBack(weatherState);
 
@@ -218,17 +222,46 @@ const UiFactory = {
         return controlButtonsMenuItem;
     },
 
-    createPoweredByMenuItem : () => {
+    createPoweredByMenuItem : (uiContext) => {
         let poweredByInfo = new PopupMenu.PopupBaseMenuItem({
             reactive: false
         });
 
-        let poweredByLabel = new St.Label({
-            text : NoDataText,
+        let poweredByLabel = new St.Button({
+            x_align:  St.Align.START,
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            accessible_name: "poweredByLabel",
             name : "poweredByLabel"
         });
 
-        poweredByInfo.actor.add_actor(poweredByLabel);
+        poweredByLabel.set_label(NoDataText);
+
+        poweredByLabel.connect("clicked", () => {
+            uiContext.menu.actor.hide();
+            let url = WeatherStateUpdater.provider.homePageUri;
+            Gtk.show_uri(null, url, global.get_current_time());
+        });
+
+        let lastUpdatedDateTime = new St.Label({
+            x_align:  St.Align.START,
+            style_class: "provider-info-last-updated",
+            text : NoDataText,
+            name : "lastUpdatedDateTime"
+        });
+
+        let menuItemLayout = new St.BoxLayout({
+            x_align:  St.Align.START,
+            vertical: true,
+            accessible_name : "layout",
+            name : "layout"
+        });
+
+        menuItemLayout.add_actor(poweredByLabel);
+        menuItemLayout.add_actor(lastUpdatedDateTime);
+
+        poweredByInfo.actor.add_actor(menuItemLayout);
         return poweredByInfo;
     }
 };
@@ -254,6 +287,11 @@ const PywMenuButton = new Lang.Class({
         this.addToTray();
 
         this.refresh();
+
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1 * 60 * 60 * 1000, function() {
+            this.refresh();
+            return true; // Don't repeat
+        }, null);
     },
 
     initTrayButton : function(){
@@ -286,7 +324,7 @@ const PywMenuButton = new Lang.Class({
         this._controlButtonsInfo = UiFactory.createButtonsMenuItem(this);
         this.menu.addMenuItem(this._controlButtonsInfo);
 
-        this._poweredByInfo = UiFactory.createPoweredByMenuItem();
+        this._poweredByInfo = UiFactory.createPoweredByMenuItem(this);
         this.menu.addMenuItem(this._poweredByInfo);
     },
 
@@ -319,8 +357,11 @@ const PywMenuButton = new Lang.Class({
         locationLabel.text = weatherState.location;
 
         // Powered by
-        let poweredByLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "poweredByLabel");
-        poweredByLabel.text = PoweredByText + WeatherStateUpdater.provider.name;
+        let poweredByLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "layout", "poweredByLabel");
+        poweredByLabel.set_label(PoweredByText + WeatherStateUpdater.provider.name);
+
+        let lastUpdatedLabel =  UiUtils.findChildActor(this._poweredByInfo.actor, "layout", "lastUpdatedDateTime");
+        lastUpdatedLabel.text = LastUpdatedDateTimeText + WeatherState.lastUpdatedDateTime.toLocaleString();
     },
 
     addToTray: function() {

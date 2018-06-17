@@ -1,44 +1,23 @@
-/*
-Page with all possible weather states:
-https://tech",yandex",ru/weather/doc/dg/concepts/forecast-response-test-docpage/
-
-clear"                   : "ясно",
-partly-cloudy"                   : "малооблачно",
-cloudy"                   : "облачно с прояснениями",
-overcast"                   : "пасмурно",
-partly-cloudy-and-light-rain"                   : "небольшой дождь",
-partly-cloudy-and-rain"                   : "дождь",
-overcast-and-rain"                   : "сильный дождь",
-overcast-thunderstorms-with-rain"                   : "сильный дождь, гроза",
-cloudy-and-light-rain"                   : "небольшой дождь",
-overcast-and-light-rain"                   : "небольшой дождь",
-cloudy-and-rain"                   : "дождь",
-overcast-and-wet-snow"                   : "дождь со снегом",
-partly-cloudy-and-light-snow"                   : "небольшой снег",
-partly-cloudy-and-snow"                   : "снег",
-overcast-and-snow"                   : "снегопад",
-cloudy-and-light-snow"                   : "небольшой снег",
-overcast-and-light-snow"                   : "небольшой снег",
-cloudy-and-snow"                   : "снег",
-*/
+// Page with all possible weather states:
+// https://tech.yandex.ru/weather/doc/dg/concepts/forecast-response-test-docpage/
 
 const Locale = {
-    "clear"                                 : "ясно",
-    "partly-cloudy"                         : "малооблачно",
-    "cloudy"                                : "облачно с прояснениями",
-    "overcast"                              : "пасмурно",
-    "partly-cloudy-and-light-rain"          : "небольшой дождь",
-    "partly-cloudy-and-rain"                : "дождь",
-    "overcast-and-rain"                     : "сильный дождь",
-    "overcast-thunderstorms-with-rain"      : "сильный дождь, гроза",
-    "cloudy-and-light-rain"                 : "небольшой дождь",
-    "overcast-and-light-rain"               : "небольшой дождь",
-    "cloudy-and-rain"                       : "дождь",
-    "overcast-and-wet-snow"                 : "дождь со снегом",
-    "partly-cloudy-and-light-snow"          : "небольшой снег",
-    "partly-cloudy-and-snow"                : "снег",
-    "overcast-and-snow"                     : "снегопад",
-    "cloudy-and-light-snow"                 : "небольшой снег",
-    "overcast-and-light-snow"               : "небольшой снег",
-    "cloudy-and-snow"                       : "снег"
+    "clear"                                 : "Clear",
+    "partly-cloudy"                         : "Partly cloudy",
+    "cloudy"                                : "Cloudy",
+    "overcast"                              : "Overcast",
+    "partly-cloudy-and-light-rain"          : "Light rain",
+    "partly-cloudy-and-rain"                : "Rain",
+    "overcast-and-rain"                     : "Heavy rain",
+    "overcast-thunderstorms-with-rain"      : "Thunderstorms",
+    "cloudy-and-light-rain"                 : "Light rain",
+    "overcast-and-light-rain"               : "Light rain",
+    "cloudy-and-rain"                       : "Rain",
+    "overcast-and-wet-snow"                 : "Rain with snow",
+    "partly-cloudy-and-light-snow"          : "Light snow",
+    "partly-cloudy-and-snow"                : "Snow",
+    "overcast-and-snow"                     : "Snowy",
+    "cloudy-and-light-snow"                 : "Light Snow",
+    "overcast-and-light-snow"               : "Light Snow",
+    "cloudy-and-snow"                       : "Snow"
 };

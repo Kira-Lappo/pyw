@@ -5,14 +5,16 @@
 
 .current-weather-header {
     font-size: 26pt;
-    color: #ffffff;
 }
 
 .current-weather-location {
     font-size: 8pt;
-    color: #ffffff;
 }
 
 .weather-icon {
-    color: #ffffff;
+    font-size: 12pt;
+}
+
+.provider-info-last-updated {
+    float: right;
 }

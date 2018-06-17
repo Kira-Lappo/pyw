@@ -4,10 +4,17 @@ const Locale = {
     RUSSIAN : "ru_RU"
 };
 
+const localizations = {
+    "en_US" : {
+        "yandexWeatherLocale" : imports.locale.en_US.yandexWeatherLocale.Locale
+    },
+    "ru_RU" : {
+        "yandexWeatherLocale" : imports.locale.ru_RU.yandexWeatherLocale.Locale
+    }
+};
+
 const LocaleProvider = {
     getLocalizedString : function(weatherProviderName, localeId, key){
-        // var locale = import.locale.localeId.weatherProviderName;
-        // return locale[key];
-        return key;
+        return localizations[localeId][weatherProviderName][key];
     }
 };

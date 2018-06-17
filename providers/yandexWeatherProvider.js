@@ -12,6 +12,7 @@ const YandexWeatherApiPATHeader = "X-Yandex-API-Key";
 function YandexWeatherProvider() {
     return {
         get name() { return "Yandex.Weather"; },
+        get homePageUri() { return "https://yandex.by/pogoda"; },
 
         getWeatherState : (requestParameters, callbackFunc) => {
             callbackFunc = callbackFunc || (() => {});
